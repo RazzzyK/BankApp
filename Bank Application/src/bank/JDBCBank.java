@@ -21,15 +21,28 @@ public class JDBCBank {
 			Class.forName("oracle.jdbc.driver.OracleDriver");
 			Connection conn = DriverManager.getConnection(host, user, password);
 			
+			
+			String safeInsert = "INSERT INTO MASTER(user_id, user, pass) VALUES (?, ?, ?)";
+			
 			String safeQuery = "Select * from MASTER where user_id=?";
 			
-			PreparedStatement ps = conn.prepareStatement(safeQuery);
+			PreparedStatement ps = conn.prepareStatement(safeInsert);
 			
-			ps.setString(1, "1337");
+			ps.setInt(1, 111);
+			ps.setString(2, "raz");
+			ps.setString(3, "pass");
+			
+			int row = ps.executeUpdate();
+			
+			
+			
+			
+			ps = conn.prepareStatement(safeQuery);
+			
+			ps.setString(1, "111");
 			
 			ResultSet rs = ps.executeQuery();
-//			if(rs.next())
-//				System.out.println("True");
+
 			while(rs.next())
 			{
 				System.out.println("User_ID: " + rs.getInt(1));
