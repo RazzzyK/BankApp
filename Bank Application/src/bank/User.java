@@ -1,8 +1,6 @@
 package bank;
 
 import java.io.Serializable;
-import java.util.InputMismatchException;
-import java.util.Scanner;
 
 public class User implements Serializable{
 	
@@ -29,76 +27,30 @@ public class User implements Serializable{
 	
 	private double accountBalance;
 	private long accountNumber;
-	private long jointAccNo;
-	
-	private String temp;	
+	private long jointAccNo;	
 
-	public User()  //Creating a new Customer
-	{
-		Scanner scan = new Scanner(System.in);
-		
-		System.out.println("Thanks for choosing The Bank! Please fill out all information on this application\n\tYour Application is subject to pending approval...\n");
-		
-		System.out.print("First Name: ");
-		setFirstName(scan.nextLine());
-		System.out.print("Last Name: ");
-		setLastName(scan.nextLine());
-		
-		try
-		{
-			System.out.print("Phone Number(Only Numerics Accepted): ");
-			setPhoneNumber(scan.nextLong());
-			scan.nextLine();
-		} catch(InputMismatchException e)
-		{
-			System.out.println("\n*** Invalid input format an employee will help you correct this later. ***\n***                         Please Continue!                           ***");
-			scan.nextLine();
-		}
-		
-		System.out.print("Email Address: ");
-		setEmail(scan.nextLine());
-		
-		try
-		{
-			System.out.print("Last 4 of SSN(Only Numerics Accepted): ");
-			setSsn(scan.nextInt());
-			scan.nextLine();
-		} catch(InputMismatchException e)
-		{
-			System.out.println("\n*** Invalid input format an employee will help you correct this later. ***\n***                         Please Continue!                           ***");
-			scan.nextLine();
-		}
-		
-		System.out.print("Username: ");
-		setUsername(scan.nextLine());
-		System.out.print("Password: ");
-		setPassword(scan.nextLine());
-		
-		setAccountNumber((long) Math.floor(Math.random() * 9_000_000_000L) + 1_000_000_000L);
-		
-		System.out.print("Will this be a joint account? Please enter 'y' for yes or anything else for no\nSelection: ");
-		temp = scan.nextLine();
-		if(temp.equals("y") || temp.equals("Y"))
-		{
-			setJointAccount(true);
-			System.out.print("Enter existing account number: ");
-			setJointAccNo(scan.nextLong());
-		}
-		else
-		{
-			setJointAccount(false);
-			setJointAccNo(0);
-		}
-		
-		setApproved(false);
-		setAccountBalance(0);
-		setEmployee(false);
-		setAdmin(false);
-		
-		//scan.close(); cannot close scanner due to System.in
-	}
 	
-	public User(String first, String last, int ssn)  //Creating a new employee
+	
+	
+	public User() {
+		super();
+		this.username = "";
+		this.password = "";
+		this.firstName = "";
+		this.lastName = "";
+		this.ssn = 0;
+		this.email = "";
+		this.phoneNumber = 0;
+		this.isJointAccount = false;
+		this.isApproved = false;
+		this.isAdmin = false;
+		this.isEmployee = false;
+		this.accountBalance = 0;
+		this.accountNumber = 0;
+		this.jointAccNo = 0; //This should be an array of accno
+	}
+
+	public User(String first, String last, int ssn, Boolean app, Boolean emp, Boolean ad)  //Creating a new employee
 	{
 		this.firstName = first;
 		this.lastName = last;
@@ -106,16 +58,16 @@ public class User implements Serializable{
 		this.username = first + "." + last;
 		this.password = first + "" + last.charAt(0);
 		
-		this.accountNumber = (long) Math.floor(Math.random() * 90_000L) + 10_000L;
+		this.accountNumber = (long) Math.floor(Math.random() * 90_000L) + 10_000L;  //setter method for generating a new unique id
 		
 		this.email = first + "." + last + "@bank.com";
 		this.phoneNumber = 18001234560L;
 		this.ssn = ssn;
 		
 		this.isJointAccount = false;
-		this.isEmployee = true;
-		this.isApproved = true;
-		this.isAdmin = false;
+		this.isEmployee = emp;
+		this.isApproved = app;
+		this.isAdmin = ad;
 	}
 	
 	public User(String first, String last)  //Creating a new Admin
@@ -270,7 +222,7 @@ public class User implements Serializable{
 
 	@Override
 	public String toString() {
-		return "\t[1] Account Number = " + accountNumber + "\n\t[2] Account Balance = $" + accountBalance + "\n\t[3] Username = " + username + "\n\t[4] Password = " + password + "\n\t[5] PhoneNumber = " + phoneNumber + "\n\t[6] Email = " + email +  "\n\t[7] SSN = " + ssn + "\n\t[8] Joint Account Status"
+		return "\t[1] Account Number = " + accountNumber + "\n\t[2] Account Balance = $" + getAccountBalance() + "\n\t[3] Username = " + username + "\n\t[4] Password = " + password + "\n\t[5] PhoneNumber = " + phoneNumber + "\n\t[6] Email = " + email +  "\n\t[7] SSN = " + ssn + "\n\t[8] Joint Account Status"
 				;
 	}
 	
