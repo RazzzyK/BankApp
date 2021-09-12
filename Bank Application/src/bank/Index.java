@@ -32,7 +32,7 @@ public class Index{
 			userList.add(ad.createAdmin());
 			userList.add(emp.newEmployee());
 		}
-		test.insertDB(userList);
+		//test.insertDB(userList);
 		
 //		do
 //		{

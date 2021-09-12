@@ -20,39 +20,10 @@ public class JDBCBank {
 		{
 			Class.forName("oracle.jdbc.driver.OracleDriver");
 			Connection conn = DriverManager.getConnection(host, user, password);
-			
-			
-			String safeInsert = "INSERT INTO MASTER(user_id, user, pass) VALUES (?, ?, ?)";
-			
-			String safeQuery = "Select * from MASTER where user_id=?";
-			
-			PreparedStatement ps = conn.prepareStatement(safeInsert);
-			
-			ps.setInt(1, 111);
-			ps.setString(2, "raz");
-			ps.setString(3, "pass");
-			
-			int row = ps.executeUpdate();
-			
-			
-			
-			
-			ps = conn.prepareStatement(safeQuery);
-			
-			ps.setString(1, "111");
-			
-			ResultSet rs = ps.executeQuery();
-
-			while(rs.next())
-			{
-				System.out.println("User_ID: " + rs.getInt(1));
-				
-				System.out.println("User Name: " + rs.getString(2));
-				
-				System.out.println("Password: " + rs.getString(3));
-			}
-			
 			System.out.println("HIT!");
+			
+			insertDB(conn);
+			//selectDB(conn);
 			
 		}catch (ClassNotFoundException e)
 		{
@@ -63,8 +34,51 @@ public class JDBCBank {
 		}
 	}
 	
-	public void insertDB(ArrayList<User> list)
+	public void insertDB(Connection conn)
 	{
+		String safeInsert = "INSERT INTO MASTER VALUES (?, ?, ?)";
 		
+		PreparedStatement push;
+		try {
+			push = conn.prepareStatement(safeInsert);
+			
+			push.setInt(1, 111);
+			push.setString(2, "raz");
+			push.setString(3, "pass");
+			
+			int row = push.executeUpdate();
+			
+			System.out.println("Sucessfuly Insert");
+			
+		} catch (SQLException e) {
+			
+			e.printStackTrace();
+		}
+	}
+	
+	public void selectDB(Connection conn)
+	{
+		String safeQuery = "Select * from MASTER where user_id=?";
+		
+		PreparedStatement ps;
+		try {
+			ps = conn.prepareStatement(safeQuery);
+			
+			ps.setString(1, "1337");
+			
+			ResultSet rs = ps.executeQuery();
+			
+			while(rs.next())
+			{
+				System.out.println("User_ID: " + rs.getInt(1));
+				
+				System.out.println("User Name: " + rs.getString(2));
+				
+				System.out.println("Password: " + rs.getString(3));
+			}
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 }
