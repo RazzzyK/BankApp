@@ -78,7 +78,7 @@ public class User implements Serializable{
 		this.username = "Admin";
 		this.password = "Admin";
 		
-		this.accountNumber = -1;
+		this.accountNumber = -111;
 		
 		this.email = "admin@bank.com";
 		this.phoneNumber = 18001234560L;

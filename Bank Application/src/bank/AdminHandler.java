@@ -321,6 +321,24 @@ public class AdminHandler extends User{
 		return newAdmin;
 	}
 	
+	public void callJDBC(User u) {
+		ArrayList<String> splitObj = new ArrayList<>();
+		
+		splitObj.add(u.getUsername());
+		splitObj.add(u.getPassword());
+		splitObj.add(u.getFirstName());
+		splitObj.add(u.getLastName());
+		splitObj.add(u.getSsn() + "");
+		splitObj.add(u.getEmail());
+		splitObj.add(u.getPhoneNumber() + "");
+		//splitObj.add(u.isApproved());
+		//splitObj.add(u.isEmployee());
+		//splitObj.add(u.isAdmin());
+		splitObj.add(u.getAccountBalance());
+		
+		
+	}
+	
 	public static void printUsers(ArrayList<User> cstList) {
 		if(cstList.size() == 0)
 			System.out.println("\tNo Customers in List");

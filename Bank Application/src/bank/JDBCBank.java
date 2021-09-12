@@ -22,7 +22,7 @@ public class JDBCBank {
 			Connection conn = DriverManager.getConnection(host, user, password);
 			System.out.println("HIT!");
 			
-			insertDB(conn);
+			//insertDB(conn);
 			//selectDB(conn);
 			
 		}catch (ClassNotFoundException e)
@@ -34,17 +34,17 @@ public class JDBCBank {
 		}
 	}
 	
-	public void insertDB(Connection conn)
-	{
+	public void insertDB(Connection conn, int i, String userN, String passW)
+	{	
 		String safeInsert = "INSERT INTO MASTER VALUES (?, ?, ?)";
 		
 		PreparedStatement push;
 		try {
 			push = conn.prepareStatement(safeInsert);
 			
-			push.setInt(1, 111);
-			push.setString(2, "raz");
-			push.setString(3, "pass");
+			push.setInt(1, i);
+			push.setString(2, userN);
+			push.setString(3, passW);
 			
 			int row = push.executeUpdate();
 			
