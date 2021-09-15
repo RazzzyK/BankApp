@@ -17,18 +17,22 @@ public class CustomerHandler extends User {
 		//ArrayList<User> cstList = new ArrayList<User>();
 	}
 	
-	public ArrayList<User> customerInterface(int i, ArrayList<User> userList) {
+	public User customerInterface(String entireUser, JDBCBank ref) {
 		//Scanner scan = new Scanner(System.in);
-		
 		int userIn = 0;
+		
+		//SOME SORT OF SPLIT METHOD TO REPOPULATE A USER OBJ
+		User u = parseToUser(entireUser);
+		ref.addTransaction(u, "Login");
+		
 		do
 		{
-			if(!userList.get(i).isApproved())
+			if(!u.isApproved())
 			{
-				System.out.println("Your account is still pending approval please try again later.");
+				System.out.println("Your account is still pending approval please try again later...");
 				break;
 			}
-			System.out.println("* * * * * *  Current Balance: $" + userList.get(i).getAccountBalance() + "  * * * * * *\n");
+			System.out.println("* * * * * *  Current Balance: $" + u.getAccountBalance() + "  * * * * * *\n");
 			System.out.println("\t[1] Withdraw\t\t[2] Deposit\n\t[3] Transfer Funds\t[5] Log out (Save Changes)");
 			
 			System.out.print("\t\tSelection: ");
@@ -46,39 +50,42 @@ public class CustomerHandler extends User {
 			
 			switch(userIn)
 			{
-			case 1: userList = withdrawl(i, userList);
+			case 1: u = withdrawl(u);
+			ref.addTransaction(u, "Withdrawl");
 			break;
-			case 2: userList = deposit(i, userList);
+			case 2: u = deposit(u);
+			ref.addTransaction(u, "Deposit");
 			break;
-			case 3: userList = transfer(i, userList);
+			case 3: u = transfer(u, ref);
+			ref.addTransaction(u, "Transfer OUT");
 			break;
-			case 5: System.out.println("\t\t|  Thanks for banking " + userList.get(i).getFirstName() + " " + userList.get(i).getLastName() + "  |");
+			case 5: System.out.println("\t\t|  Thanks for banking " + u.getFirstName() + " " + u.getLastName() + "  |");
 			break;
 			default: System.out.println("Invalid Selection! Try Again!\n");
 			}
 		}while(userIn != 5);
 		
-		return userList;
+		return u;
 		//Consider writing to file here!
 		//scan2.close();
 	}
 
-	public ArrayList<User> transfer(int i, ArrayList<User> userList)
+	public User transfer(User u, JDBCBank ref)
 	{
-		int userIn;
+		long userIn;
 		double amount = 0;
 		String cont = "no";
 		
 		do
 		{
-			if(Double.parseDouble(userList.get(i).getAccountBalance()) == 0)
+			if(Double.parseDouble(u.getAccountBalance()) == 0)
 			{
 				System.out.println("Can not transfer. Account Balance is 0");
 				break;
 			}
 			
 			System.out.print("\t\tEnter 10 digit account number to transfer to : ");
-			userIn = scan.nextInt();
+			userIn = scan.nextLong();
 			System.out.print("Enter Amount: $");
 			
 			do
@@ -100,7 +107,7 @@ public class CustomerHandler extends User {
 					cont = scan.next();
 					scan.nextLine();
 			}
-			if(amount > Double.parseDouble(userList.get(i).getAccountBalance()))
+			if(amount > Double.parseDouble(u.getAccountBalance()))
 			{
 				System.out.println("\t\tInsufficent Funds!");
 				System.out.println("To enter a new value enter 'y' or enter anything else to return to the menu...\n\t\tSelection: ");
@@ -108,30 +115,33 @@ public class CustomerHandler extends User {
 				scan.nextLine();
 			}
 			else
-			{
-				for(int x = 0; x < userList.size(); x++)
+			{	
+				String str = ref.findInCustomerTable(userIn + "");
+				if(str.equals("INVALID"))
+					System.out.println("Sorry could not find that customer ID! Try again...");
+				else
 				{
-					if(userIn == userList.get(x).getAccountNumber())
-					{
-						userList.get(i).setAccountBalance(Double.parseDouble(userList.get(i).getAccountBalance()) - amount);
+					u.setAccountBalance(Double.parseDouble(u.getAccountBalance()) - amount);
+					ref.updateCustomer(u);
+					User temp = parseToUser(str);
 					
-						userList.get(x).setAccountBalance(Double.parseDouble(userList.get(x).getAccountBalance()) + amount);
-						System.out.println("You transfered $" + userIn + " to account number " + userList.get(x).getAccountNumber() 
-								+ " belonging to user " + userList.get(x).getFirstName() + " " + userList.get(x).getLastName());
-						
-						//writeToFile(userList);
-					}
+					
+					temp.setAccountBalance(Double.parseDouble(temp.getAccountBalance()) + amount);
+					System.out.println("You transfered $" + amount + " to account number " + userIn 
+							+ " belonging to user " + temp.getFirstName() + " " + temp.getLastName());
+					
+					ref.updateCustomer(temp);
+					ref.addTransaction(temp, "Transfer IN");
+					return u;
 				}
 			}	
-			//writeToFile(userList);
 			
 		}while(cont.equals("y") || cont.equals("Y"));
 		
-		return userList;
-		//scan2.close();
+		return u;
 	}
 	
-	public ArrayList<User> deposit(int i, ArrayList<User> userList)
+	public User deposit(User u)
 	{
 		double userIn = 0;
 		String cont = "no";
@@ -159,24 +169,22 @@ public class CustomerHandler extends User {
 				scan.nextLine();
 			}
 			
-			userList.get(i).setAccountBalance(Double.parseDouble(userList.get(i).getAccountBalance()) + userIn);
-			System.out.println("You deposited $" + String.format("%.2f", userIn) + ". Your new balance is $" + userList.get(i).getAccountBalance());
-			//writeToFile(userList);
+			u.setAccountBalance(Double.parseDouble(u.getAccountBalance()) + userIn);
+			System.out.println("You deposited $" + String.format("%.2f", userIn) + ". Your new balance is $" + u.getAccountBalance());
 			
 		}while(cont.equals("y") || cont.equals("Y"));
 		
-		return userList;
-		//scan2.close();
+		return u;
 	}
 	
-	public ArrayList<User> withdrawl(int i, ArrayList<User> userList)
+	public User withdrawl(User u)
 	{
 		double userIn = 0;
 		String cont = "no";
 		
 		do
 		{
-			if(Double.parseDouble(userList.get(i).getAccountBalance()) == 0)
+			if(Double.parseDouble(u.getAccountBalance()) == 0)
 			{
 				System.out.println("Can not withdraw. Account Balance is 0");
 				break;
@@ -202,27 +210,26 @@ public class CustomerHandler extends User {
 				cont = scan.next();
 				scan.nextLine();
 			}
-			else if(userIn > Double.parseDouble(userList.get(i).getAccountBalance()))
+			else if(userIn > Double.parseDouble(u.getAccountBalance()))
 			{
 				System.out.println("\t\tInsufficent Funds!");
 				System.out.println("To enter a new value enter 'y' or enter anything else to return to the menu...\n\t\tSelection: ");
 				cont = scan.next();
 				scan.nextLine();
 			}
-			
-			userList.get(i).setAccountBalance(Double.parseDouble(userList.get(i).getAccountBalance()) - userIn);
-			System.out.println("You withdrew $" + String.format("%.2f", userIn) + ". Your new balance is $" + userList.get(i).getAccountBalance());
-			//writeToFile(userList);
-			
+			else
+			{
+				u.setAccountBalance(Double.parseDouble(u.getAccountBalance()) - userIn);
+				System.out.println("You withdrew $" + String.format("%.2f", userIn) + ". Your new balance is $" + u.getAccountBalance());
+				return u;
+			}
 		}while(cont.equals("y") || cont.equals("Y"));
 		
-		return userList;
-		//scan2.close();
+		return u;
 	}
 	
 	public User newCustomer()
 	{
-		//Scanner scan = new Scanner(System.in);
 		User newUser = new User();
 		
 		String temp;
@@ -285,9 +292,8 @@ public class CustomerHandler extends User {
 		newUser.setEmployee(false);
 		newUser.setAdmin(false);
 		
-		return newUser;
+		newUser.setDailyLimit(1000);
 		
-		//WRITE THIS CUSTOMER TO DB CUSTOMER TABLE AND MASTER TABLE
-		//save user obj onto customer table and master table on DB
+		return newUser;
 	}
 }

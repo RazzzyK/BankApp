@@ -16,26 +16,21 @@ public class EmployeeHandler extends User{
 		
 	}
 	
-	public ArrayList<User> employeeInterface(int x, ArrayList<User> userList)
+	public void employeeInterface(JDBCBank ref, String entireUser)
 	{
 		ArrayList<User> pendingApps = new ArrayList<User>();
+		int index = 0, pendingIndex = 0, status = 0;
 		
-		int index = 0, pendingIndex = 0, status = 0, i = 0;
+		User u = parseToEmployee(entireUser);
+		pendingApps = ref.getNotApproveTable();
 		
-		if(!userList.get(x).isApproved())
+		if(!u.isApproved())
 		{
-			System.out.println("Your account is still pending approval please try again later.");
-			return userList;
+			System.out.println("Your account is still pending approval please try again later..");
+			return;
 		}
 		
-		for(int z = 0; z < userList.size(); z++)
-		{
-			
-			if(!userList.get(z).isApproved() && !userList.get(z).isEmployee())
-				pendingApps.add(userList.get(z));
-		}
-		
-		while(pendingApps.size() > 0)
+		while(pendingApps != null && pendingApps.size() > 0)
 		{
 			System.out.println("** ATTENTION THERE ARE " + pendingApps.size() + " PENDING APPLICATIONS THAT NEED(S) TO BE APPROVED/DENIED **\n**          PLEASE APPROVE/DENY THESE APPLICATIONS BEFORE CONTINUING           **\n");
 			System.out.println("\tList of Pending Applications");
@@ -77,28 +72,20 @@ public class EmployeeHandler extends User{
 			if(status == 1)
 			{
 				System.out.println("Name: " + pendingApps.get(pendingIndex - 1).getFirstName() + " Acc No: " + pendingApps.get(pendingIndex - 1).getAccountNumber());
-				userList = approveApp(pendingApps.get(pendingIndex - 1).getAccountNumber(), true, userList);
+				approveApp(true, pendingApps.get(index - 1), ref);
 				pendingApps.remove(pendingIndex - 1);
 			}
 			
 			if(status == 2)
 			{
-				userList = approveApp(pendingApps.get(pendingIndex - 1).getAccountNumber(), false, userList);
+				approveApp(false, pendingApps.get(index - 1), ref);
 				pendingApps.remove(pendingIndex - 1);
 			}
 		}
 		
 		do
 		{
-			ArrayList<User> cstList = new ArrayList<User>();
-			
-			for(i = 0; i < userList.size(); i++)
-			{
-				if(!(userList.get(i).isEmployee()) &&!(userList.get(i).isAdmin()) && userList.get(i).isApproved())
-				{
-					cstList.add(userList.get(i));
-				}
-			}
+			ArrayList<User> cstList = ref.getCustomerTable();
 			
 			System.out.println("\n\t    Customer List\n\t    -------------");
 			printCustomers(cstList);
@@ -125,13 +112,14 @@ public class EmployeeHandler extends User{
 				System.out.println("\tInvalid Selection Try Again");
 				continue;
 			}
-			
+			User cst = cstList.get(index - 1);
 			do
 			{
-				System.out.println("\nCustomer Selected: " + cstList.get(index - 1).printName());
-				long cstAccountNumber = cstList.get(index - 1).getAccountNumber();
-				System.out.println(cstList.get(index - 1));
-				System.out.println("\n\t[-99] Back to Menu");
+				
+				System.out.println("\nCustomer Selected: " + cst.printName());
+
+				System.out.println(cst.customerToString());
+				System.out.println("\n\t[-99] Back to Menu (Save Changes)");
 				
 				System.out.println("\nSelect an option to edit customer information");
 				System.out.print("\tSelection: ");
@@ -155,103 +143,72 @@ public class EmployeeHandler extends User{
 					continue;
 				}
 				
-				userList = editCustomerInfo(userIn, cstAccountNumber, userList);
+				 u = editCustomerInfo(userIn, cstList.get(index - 1));
 				
 			}while(userIn != -99);
-			
+			ref.updateCustomer(cst);
 		}while(index != -99);
 		
-		//scan2.close();
-		return userList;
 	}
 	
-	public ArrayList<User> editCustomerInfo(int userIn, long accNo, ArrayList<User> userList)
+	public User editCustomerInfo(int userIn, User u)
 	{		
-		int i;
-		
-		for(i = 0; i < userList.size(); i++)
-		{
-			if(userList.get(i).getAccountNumber() == accNo)
-				break;
-		}
 		
 		switch(userIn)
 		{
 		case 1: 
-			System.out.print("\n\tGenerating New 10 Digit Account Number");
-			userList.get(i).setAccountNumber((long) Math.floor(Math.random() * 9_000_000_000L) + 1_000_000_000L);
-			System.out.println("\n\tNew Account Number: " + userList.get(i).getAccountNumber());
+			System.out.println("Account number can not be changed right now...");
+//			System.out.print("\n\tGenerating New 10 Digit Account Number");
+//			u.setAccountNumber((long) Math.floor(Math.random() * 9_000_000_000L) + 1_000_000_000L);
+//			System.out.println("\n\tNew Account Number: " + u.getAccountNumber());
+			System.out.println("\n\tCurrent Account Number: " + u.getAccountNumber());
+			break;
+		case 5: 
+			System.out.print("\n\tDirectly Edit Account Balance\n\tEnter New Account Balance: ");
+			u.setAccountBalance(scan.nextLong());
+			scan.nextLine();
 
 			break;
-		case 2: 
-			System.out.print("\n\tDirectly Edit Account Balance\n\tEnter New Account Balance: ");
-			userList.get(i).setAccountBalance(scan.nextLong());
+		case 2:
+			System.out.print("\n\tDirectly Edit Phone Number\n\tEnter New Phone Number: ");
+
+			u.setPhoneNumber(scan.nextLong());
 			scan.nextLine();
 
 			break;
 		case 3:
-			System.out.print("\n\tDirectly Edit Username\n\tEnter New Username: ");
-			userList.get(i).setUsername(scan.nextLine());
+			System.out.print("\n\tDirectly Email Address\n\tEnter New Email Address: ");
+			u.setEmail(scan.nextLine());
 
 			break;
 		case 4:
-			System.out.print("\n\tDirectly Edit Password\n\tEnter New Password: ");
-			userList.get(i).setPassword(scan.nextLine());
-
-			break;
-		case 5:
-			System.out.print("\n\tDirectly Edit Phone Number\n\tEnter New Phone Number: ");
-
-			userList.get(i).setPhoneNumber(scan.nextLong());
-			scan.nextLine();
-
-			break;
-		case 6:
-			System.out.print("\n\tDirectly Email Address\n\tEnter New Email Address: ");
-			userList.get(i).setEmail(scan.nextLine());
-
-			break;
-		case 7:
 			System.out.print("\n\tDirectly Edit SSN\n\tEnter New SSN: ");
-			userList.get(i).setSsn(scan.nextInt());
+			u.setSsn(scan.nextInt());
 			scan.nextLine();
 
 			break;
-		case 8:
-			System.out.println("\n\tJoint Account Status is " + userList.get(i).isJointAccount());
-
-			break;
+//		case 6:
+//			System.out.println("\n\tJoint Account Status is " + u.isJointAccount());
+//
+//			break;
 		case -99: System.out.println("\tExit Customer");
 			break;
 			
 		default: System.out.println("yeer");
 		}
 		
-		//writeToFile(userList);
-		return userList;
+		return u;
 	}
 	
-	public ArrayList<User> approveApp(long accNo, boolean b, ArrayList<User> userList)
+	public void approveApp(boolean b, User u, JDBCBank ref)
 	{
-		for(int i = 0; i < userList.size(); i++)
+		if(b)
 		{
-			if(userList.get(i).getAccountNumber() == accNo)
-			{
-				userList.get(i).setApproved(b);
-				
-				if(b)
-					System.out.println(userList.get(i).getFirstName() + " has been APPROVED!");
-				else
-				{
-					System.out.println(userList.get(i).getFirstName() + " has been DENIED!");
-					userList.remove(i);
-				}
-				
-				//writeToFile(userList);
-				return userList;
-			}
+			ref.customerApproved(u);
 		}
-		return userList;
+		else
+			ref.customerDenied(u);
+		
 	}
 	
 	public static void printCustomers(ArrayList<User> cstList) {

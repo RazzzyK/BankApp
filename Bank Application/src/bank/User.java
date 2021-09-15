@@ -28,7 +28,7 @@ public class User implements Serializable{
 	private double accountBalance;
 	private long accountNumber;
 	private long jointAccNo;	
-
+	private int dailyLimit;
 	
 	
 	
@@ -88,6 +88,51 @@ public class User implements Serializable{
 		this.isEmployee = false;
 		this.isApproved = true;
 		this.isAdmin = true;
+	}
+	
+	public User(String id, String first, String last, String social, String em, String phone, String status, String bal, String limit) {
+		
+		this.username = "";
+		this.password = "";
+		this.firstName = first;
+		this.lastName = last;
+		this.ssn = Integer.parseInt(social);
+		this.email = em;
+		this.phoneNumber = Long.parseLong(phone);
+		this.isJointAccount = false;
+		if(status.equals("Y"))
+			this.isApproved = true;
+		else
+			this.isApproved = false;
+		this.isAdmin = false;
+		this.isEmployee = false;
+		this.accountBalance = Double.parseDouble(bal);
+		this.accountNumber = Long.parseLong(id);
+		this.jointAccNo = 0; //This should be an array of accno
+		this.dailyLimit = Integer.parseInt(limit);
+	}
+	
+	public User(String id, String first, String last, String social, String phone, String em, String status) {
+		
+		this.username = "";
+		this.password = "";
+		this.firstName = first;
+		this.lastName = last;
+		this.ssn = Integer.parseInt(social);
+		this.email = em;
+		this.phoneNumber = Long.parseLong(phone);
+		this.isJointAccount = false;
+		System.out.println();
+		if(status.equals("Y"))
+			this.isApproved = true;
+		else
+			this.isApproved = false;
+		this.isAdmin = false;
+		this.isEmployee = false;
+		this.accountBalance = 0;
+		this.accountNumber = Long.parseLong(id);
+		this.jointAccNo = 0; //This should be an array of accno
+		this.dailyLimit = 0;
 	}
 	
 	public boolean isEmployee() {
@@ -196,6 +241,14 @@ public class User implements Serializable{
 		this.isAdmin = isAdmin;
 	}
 
+	public int getDailyLimit() {
+		return dailyLimit;
+	}
+
+	public void setDailyLimit(int dailyLimit) {
+		this.dailyLimit = dailyLimit;
+	}
+
 	public String printName()
 	{
 		return getFirstName() + " " + getLastName() + "\n";
@@ -211,12 +264,12 @@ public class User implements Serializable{
 	}
 
 	public String employeeToString() {
-		return "\t[1] Account Number = " + accountNumber + "\n\t[2] Username = " + username + "\n\t[3] Password = " + password + "\n\t[4] PhoneNumber = " + phoneNumber + "\n\t[5] Email = " + email +  "\n\t[6] SSN = " + ssn
+		return "\t[1] Account Number = " + accountNumber + "\n\t[2] PhoneNumber = " + phoneNumber + "\n\t[3] Email = " + email +  "\n\t[4] SSN = " + ssn
 				;
 	}
 	
 	public String customerToString() {
-		return "\t[1] Account Number = " + accountNumber + "\n\t[2] Username = " + username + "\n\t[3] Password = " + password + "\n\t[4] PhoneNumber = " + phoneNumber + "\n\t[5] Email = " + email +  "\n\t[6] SSN = " + ssn + "\n\t[7] Account Balance = $" + accountBalance
+		return "\t[1] Account Number = " + accountNumber + "\n\t[2] PhoneNumber = " + phoneNumber + "\n\t[3] Email = " + email +  "\n\t[4] SSN = " + ssn + "\n\t[5] Account Balance = $" + accountBalance
 				;
 	}
 
@@ -226,6 +279,39 @@ public class User implements Serializable{
 				;
 	}
 	
+	public User parseToUser(String entireUser)
+	{
+		String part1, part2, part3, part4, part5, part6, part7, part8, part9;
+		String[] parts = entireUser.split(",");
+		part1 = parts[0]; // user_id
+		part2 = parts[1]; // first
+		part3 = parts[2]; // last
+		part4 = parts[3]; // ssn
+		part5 = parts[4]; // email
+		part6 = parts[5]; // phone
+		part7 = parts[6]; // approved?
+		part8 = parts[7]; // balance
+		part9 = parts[8]; // withdrawl limit
+
+		User u = new User(part1, part2, part3, part4, part5, part6, part7, part8, part9);
+		return u;
+		
+	}
 	
+	public User parseToEmployee(String entireUser)
+	{
+		String part1, part2, part3, part4, part5, part6, part7;
+		String[] parts = entireUser.split(",");
+		part1 = parts[0]; // user_id
+		part2 = parts[1]; // first
+		part3 = parts[2]; // last
+		part4 = parts[3]; // ssn
+		part5 = parts[4]; // email
+		part6 = parts[5]; // phone
+		part7 = parts[6]; // approved?
+
+		User u = new User(part1, part2, part3, part4, part5, part6, part7);
+		return u;
+	}
 
 }

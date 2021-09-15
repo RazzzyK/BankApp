@@ -16,19 +16,15 @@ public class AdminHandler extends User{
 		
 	}
 	
-	public ArrayList<User> adminInterface(ArrayList<User> userList) {
+	public void adminInterface(JDBCBank ref) {
 		ArrayList<User> pendingApps = new ArrayList<User>();
 		
-		int index = 0, pendingIndex = 0, status = 0, i = 0;
+		int index = 0, pendingIndex = 0, status = 0;
 		
-		for(int z = 0; z < userList.size(); z++)
-		{
-			
-			if(!userList.get(z).isApproved())
-				pendingApps.add(userList.get(z));
-		}
+		pendingApps = ref.getNotApproveTable();
 		
-		while(pendingApps.size() > 0)
+
+		while(pendingApps != null && pendingApps.size() > 0)
 		{
 			System.out.println("** ATTENTION THERE ARE " + pendingApps.size() + " PENDING APPLICATION(S) THAT NEEDS TO BE APPROVED/DENIED **\n**          PLEASE APPROVE/DENY THESE APPLICATIONS BEFORE CONTINUING           **\n");
 			System.out.println("\tList of Pending Applications");
@@ -83,13 +79,13 @@ public class AdminHandler extends User{
 			if(status == 1)
 			{
 				System.out.println("Name: " + pendingApps.get(pendingIndex - 1).getFirstName() + " Acc No: " + pendingApps.get(pendingIndex - 1).getAccountNumber());
-				userList = approveApp(pendingApps.get(pendingIndex - 1).getAccountNumber(), true, userList);
+				approveApp(true, pendingApps.get(pendingIndex - 1), ref);
 				pendingApps.remove(pendingIndex - 1);
 			}
 			
 			if(status == 2)
 			{
-				userList = approveApp(pendingApps.get(pendingIndex - 1).getAccountNumber(), false, userList);
+				approveApp(false, pendingApps.get(pendingIndex - 1), ref);
 				pendingApps.remove(pendingIndex - 1);
 			}
 		}
@@ -97,30 +93,22 @@ public class AdminHandler extends User{
 		
 		do
 		{
-			ArrayList<User> allApproved = new ArrayList<User>();
-			
-			for(i = 0; i < userList.size(); i++)
-			{
-				if(!userList.get(i).isAdmin())
-				{
-					allApproved.add(userList.get(i));
-				}
-			}
 			
 			System.out.println("\n\t    All Active Users\n\t------------------------");
-
-			if(allApproved.size() == 0)
-				System.out.println("\tNo Members in List");
 			
-			for(i = 0; i < userList.size(); i++)
-			{
-				if(userList.get(i).isEmployee() && userList.get(i).isApproved())
-					System.out.println("\t[" + (i + 1) + "] " + userList.get(i).getFirstName() + " " + userList.get(i).getLastName() + "\t\t*EMPLOYEE*");
-				else if(!userList.get(i).isAdmin() && userList.get(i).isApproved())
-					System.out.println("\t[" + (i + 1) + "] " + userList.get(i).getFirstName() + " " + userList.get(i).getLastName() + "\t\t" + userList.get(i).getAccountNumber());
-				else
-					System.out.println("\t[" + (i + 1) + "] ADMIN - No action applicable");
-			}
+			ArrayList<User> cstList = ref.getCustomerTable();
+			ArrayList<User> empList = ref.getEmployeeTable();
+			
+			if(empList == null && cstList == null)
+				System.out.println("\tCould not find anyone in the lists");
+				
+			if(cstList == null && empList != null)
+				cstList = empList;
+			
+			if(empList != null && cstList != null)
+				cstList.addAll(empList);
+			
+			printUsers(cstList);
 			
 			System.out.println("\n\t[-99] Admin Log Out");
 			
@@ -142,126 +130,125 @@ public class AdminHandler extends User{
 			if(index == -99) //Admin Log Out
 				break;
 			
-			if(index > allApproved.size() || index < 0)
+			User edit = cstList.get(index - 1);
+			do
 			{
-				System.out.println("\tInvalid Selection Try Again");
-				continue;
-			}
-			
-			if(!userList.get(index - 1).isAdmin())
-			{
-				do
+				userIn = 0;
+				
+				System.out.println("\n\tIndex: " + edit.printName());
+				long cstAccountNumber = edit.getAccountNumber();
+				
+				if(cstAccountNumber > 100000)
 				{
-					userIn = 0;
-					System.out.println("\n\tIndex: " + userList.get(index - 1).printName());
-					long cstAccountNumber = userList.get(index - 1).getAccountNumber();
+					System.out.println(edit.customerToString());
+					System.out.println("\n\t[9] Delete Account");
+					System.out.println("\n\t[-99] Back to Menu (Save Changes)");
 					
-					if(cstAccountNumber > 100000)
+					System.out.println("\nSelect an option to edit customer information...");
+					System.out.print("\tSelection: ");
+					do
 					{
-						System.out.println(userList.get(index - 1).customerToString());
-						System.out.println("\n\t[9] Delete Account");
-						System.out.println("\n\t[-99] Back to Menu");
-						
-						System.out.println("\nSelect an option to edit customer information...");
-						System.out.print("\tSelection: ");
-						do
+						try
 						{
-							try
-							{
-								userIn = scan.nextInt();
-							} catch(InputMismatchException e)
-							{
-								System.out.print("\tSelection: ");
-								scan.nextLine();
-							}
-						}while(userIn == 0);
-						scan.nextLine();
-						boolean b = adminEdit(userIn, cstAccountNumber, userList);
-						if(b)
-							break;
-					}
-					else if(userList.get(index - 1).isEmployee())
+							userIn = scan.nextInt();
+						} catch(InputMismatchException e)
+						{
+							System.out.print("\tSelection: ");
+							scan.nextLine();
+						}
+					}while(userIn == 0);
+					scan.nextLine();
+					
+					edit = adminEdit(userIn, edit, scan, ref);
+					
+					if(edit == null)
+						break;
+				}
+				else if(edit.isEmployee())
+				{
+					System.out.println(edit.employeeToString());
+					System.out.println("\n\t[9] Delete Account");
+					System.out.println("\n\t[-99] Back to Menu (Save Changes)");
+					
+					System.out.println("\nSelect an option to edit employee information...");
+					System.out.print("\tSelection: ");
+					do
 					{
-						System.out.println(userList.get(index - 1).employeeToString());
-						System.out.println("\n\t[9] Delete Account");
-						System.out.println("\n\t[-99] Back to Menu");
-						
-						System.out.println("\nSelect an option to edit employee information...");
-						System.out.print("\tSelection: ");
-						do
+						try
 						{
-							try
-							{
-								userIn = scan.nextInt();
-							} catch(InputMismatchException e)
-							{
-								System.out.print("\tIndex: ");
-								scan.nextLine();
-							}
-						}while(userIn == 0);
-						scan.nextLine();
-						boolean b = adminEdit(userIn, cstAccountNumber, userList);
-						if(b)
-							break;
-					}
+							userIn = scan.nextInt();
+						} catch(InputMismatchException e)
+						{
+							System.out.print("\tIndex: ");
+							scan.nextLine();
+						}
+					}while(userIn == 0);
 					
-					
-				}while(userIn != -99);
-			}
+					edit = adminEdit(userIn, edit, scan, ref);
+					if(edit == null)
+						break;
+				}
+				
+			}while(userIn != -99);
+			
+			if(edit.isEmployee())
+				ref.updateEmployee(edit);
+			else
+				ref.updateCustomer(edit);
+			
 		}while(index != -99);
 		
-		return userList;
 	}
 	
-	public static boolean adminEdit(int userIn, long accNo, ArrayList<User> userList)
+	public static User adminEdit(int userIn, User u, Scanner scan, JDBCBank ref)
 	{
-		int i;
-		
-		for(i = 0; i < userList.size(); i++)
-		{
-			if(userList.get(i).getAccountNumber() == accNo)
-				break;
-		}
-		
 		switch(userIn)
 		{
 		case 1: 
-			System.out.print("\n\tGenerating New 5 Digit Account Number");
-			userList.get(i).setAccountNumber((long) Math.floor(Math.random() * 90_000L) + 10_000L);
-			System.out.println("\n\tNew Account Number: " + userList.get(i).getAccountNumber());
+			if(!u.isEmployee())
+			{
+				System.out.println("Account number can not be changed right now...");
+				//long oldID = u.getAccountNumber();
+				//System.out.print("\n\tGenerating New 10 Digit Account Number");
+				//u.setAccountNumber((long) Math.floor(Math.random() * 9_000_000_000L) + 1_000_000_000L);
+				
+				//ref.updateID(u, oldID);
+			}
+			else
+			{
+				System.out.println("Account number can not be changed right now...");
+				//long oldID = u.getAccountNumber();
+				//System.out.print("\n\tGenerating New 5 Digit Account Number");
+				//u.setAccountNumber((long) Math.floor(Math.random() * 90_000L) + 10_000L);
+				
+				//ref.updateID(u, oldID);
+			}
+			System.out.println("\n\tCurrent Account Number: " + u.getAccountNumber());
+			
 			break;
 			
 		case 2:
-			System.out.print("\n\tDirectly Edit Username\n\tEnter New Username: ");
-			userList.get(i).setUsername(scan.nextLine());
+			System.out.print("\n\tDirectly Edit Phone Number\n\tEnter New Phone Number: ");
+			u.setPhoneNumber(scan.nextLong());
+			scan.nextLine();
 			break;
+			
 		case 3:
-			System.out.print("\n\tDirectly Edit Password\n\tEnter New Password: ");
-			userList.get(i).setPassword(scan.nextLine());
+			System.out.print("\n\tDirectly Email Address\n\tEnter New Email Address: ");
+			u.setEmail(scan.nextLine());
 			break;
 			
 		case 4:
-			System.out.print("\n\tDirectly Edit Phone Number\n\tEnter New Phone Number: ");
-			userList.get(i).setPhoneNumber(scan.nextLong());
-			scan.nextLine();
-			break;
-			
-		case 5:
-			System.out.print("\n\tDirectly Email Address\n\tEnter New Email Address: ");
-			userList.get(i).setEmail(scan.nextLine());
-			break;
-			
-		case 6:
 			System.out.print("\n\tDirectly Edit SSN\n\tEnter New SSN: ");
-			userList.get(i).setSsn(scan.nextInt());
+			u.setSsn(scan.nextInt());
 			scan.nextLine();
 			break;
 			
-		case 7: 
-			if(!userList.get(i).isEmployee())
+		case 5: 
+			if(!u.isEmployee())
 			{
 				System.out.print("\n\tDirectly Edit Account Balance\n\tEnter New Account Balance: ");
-				userList.get(i).setAccountBalance(scan.nextLong());
+				u.setAccountBalance(scan.nextLong());
 				scan.nextLine();
 			}
 			else
@@ -269,13 +256,16 @@ public class AdminHandler extends User{
 			break;
 			
 		case 9:
-			System.out.print("Are you sure you would like to permanetly delete " + userList.get(i).getFirstName() + "'s account? Enter 'Y' to delete!\n\tSelection: ");
-			scan.nextLine();
+			System.out.print("Are you sure you would like to permanetly delete " + u.getFirstName() + "'s account? Enter 'Y' to delete!\n\tSelection: ");
+			//scan.nextLine();
 			String str = scan.nextLine();
 			if(str.charAt(0) == 'Y' || str.charAt(0) == 'y')
 			{
-				userList.remove(i);
-				return true;
+				if(u.isEmployee())
+					ref.deleteFromEmployeeTable(u);
+				else
+					ref.deleteFromCustomerTable(u);
+				return null;
 			}
 			break;
 	
@@ -285,64 +275,45 @@ public class AdminHandler extends User{
 		default: System.out.println("\tInvalid Selection Try Again!");
 		}
 		
-		//writeToFile(userList);
-		return false;
-		//scan2.close();
+		return u;
 	}
 	
-	public static ArrayList<User> approveApp(long accNo, boolean b, ArrayList<User> userList)
+	public static void approveApp( boolean b, User u, JDBCBank ref)
 	{
-		for(int i = 0; i < userList.size(); i++)
+		if(b)
 		{
-			if(userList.get(i).getAccountNumber() == accNo)
-			{
-				userList.get(i).setApproved(b);
-				
-				if(b)
-					System.out.println(userList.get(i).getFirstName() + " has been APPROVED!");
-				else
-				{
-					System.out.println(userList.get(i).getFirstName() + " has been DENIED!");
-					userList.remove(i);
-				}
-				
-				//writeToFile(userList);
-				return userList;
-			}
+			if(u.getAccountNumber() < 100000)
+				ref.employeeApproved(u);
+			else
+				ref.customerApproved(u);
 		}
-		return userList;
+		else
+			if(u.getAccountNumber() < 100000)
+				ref.employeeDenied(u);
+			else
+				ref.customerDenied(u);
 	}
 	
 	public User createAdmin() {
 		User newAdmin = new User("BANK", "ADMIN");
-		
-		//writeToFile(userList);
-		
-		return newAdmin;
-	}
-	
-	public void callJDBC(User u) {
 		ArrayList<String> splitObj = new ArrayList<>();
 		
-		splitObj.add(u.getUsername());
-		splitObj.add(u.getPassword());
-		splitObj.add(u.getFirstName());
-		splitObj.add(u.getLastName());
-		splitObj.add(u.getSsn() + "");
-		splitObj.add(u.getEmail());
-		splitObj.add(u.getPhoneNumber() + "");
-		//splitObj.add(u.isApproved());
-		//splitObj.add(u.isEmployee());
-		//splitObj.add(u.isAdmin());
-		splitObj.add(u.getAccountBalance());
+		splitObj.add(newAdmin.getUsername());
+		splitObj.add(newAdmin.getPassword());
+		splitObj.add(newAdmin.getFirstName());
+		splitObj.add(newAdmin.getLastName());
+		splitObj.add(newAdmin.getSsn() + "");
+		splitObj.add(newAdmin.getEmail());
+		splitObj.add(newAdmin.getPhoneNumber() + "");
+		splitObj.add(newAdmin.getAccountBalance());
 		
-		
+		return newAdmin;
 	}
 	
 	public static void printUsers(ArrayList<User> cstList) {
 		if(cstList.size() == 0)
 			System.out.println("\tNo Customers in List");
-		
+		//System.out.println(cstList.get(1).getFirstName());
 		for(int i = 0; i < cstList.size(); i++)
 			
 			System.out.println("\t[" + (i + 1) + "] " + cstList.get(i).getFirstName() + " " + cstList.get(i).getLastName() + " " + cstList.get(i).getAccountNumber());

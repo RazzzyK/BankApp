@@ -13,6 +13,7 @@ public class Index{
 	static ArrayList<User> master = new ArrayList<User>();
 	
 	static int userInput;
+	static JDBCBank ref = new JDBCBank();
 	static CustomerHandler cst = new CustomerHandler();
 	static EmployeeHandler emp = new EmployeeHandler();
 	static AdminHandler ad = new AdminHandler();
@@ -22,59 +23,67 @@ public class Index{
 
 
 	public static void main(String[] args) throws IOException {
+		//readFromFile();
+		//User u = ad.createAdmin();
+		//ref.addToMaster(u);
+		//ref.createTable();
 		
-		JDBCBank test = new JDBCBank();
+		//System.out.println(ref.findInMaster("Admin"));
+		//ref.getNotApproveTable();
 		
-		
-		if(!readFromFile())
-		{
-			
-			userList.add(ad.createAdmin());
-			userList.add(emp.newEmployee());
-		}
-		//test.insertDB(userList);
-		
-//		do
+//		if(!readFromFile())  //Needs to be in a try catch for EOF Exception
 //		{
-//			System.out.print("\n\t\tWelcome to the Bank!\n\tPlease choose from the following menu\n\n[1] Login\t[2] Create New Account\t[-99] Quit\n\t\tSelection: ");
-//			do
-//			{
-//				try
-//				{
-//					userInput = scan.nextInt();
-//					scan.nextLine();
-//				} catch(InputMismatchException e)
-//				{
-//					System.out.print("\t\tSelection: ");
-//					scan.nextLine();
-//				}
-//			}while(userInput == 0);
+//			User u = ad.createAdmin();
+//			ref.addToMaster(u);
+//			userList.add(u);
+//			u = emp.newEmployee();
+//			userList.add(u);
+//			ref.addToMaster(u);
 //			
-//			System.out.println();
-//		
-//			if(userInput == 1)
-//				login(scan);
-//			else if(userInput == 2)
-//			{
-//				askTypeOfAccount(scan);
-//				continue;
-//				//userList.add(new User());
-//				//writeToFile(userList);
-//			}
-//			else if (userInput == -99)
-//				System.out.println("********** Thanks for using The Bank! **********");
-//			else
-//				System.out.println("Please limit your input to only 1, 2 or 3");
-//			
-//		}while(userInput != -99);
+//			writeToFile(userList);
+//		}
 		
+		do
+		{
+			System.out.print("\n\t\tWelcome to the Bank!\n\tPlease choose from the following menu\n\n[1] Login\t[2] Create New Account\t[-99] Quit\n\t\tSelection: ");
+			do
+			{
+				try
+				{
+					userInput = scan.nextInt();
+					scan.nextLine();
+				} catch(InputMismatchException e)
+				{
+					System.out.print("\t\tSelection: ");
+					scan.nextLine();
+				}
+			}while(userInput == 0);
+			
+			System.out.println();
+		
+			if(userInput == 1)
+				login(scan);
+			else if(userInput == 2)
+			{
+				askTypeOfAccount(scan);
+				continue;
+
+			}
+			else if (userInput == -99)
+				System.out.println("********** Thanks for using The Bank! **********");
+			else
+				System.out.println("Please limit your input to only 1, 2 or 3");
+			
+		}while(userInput != -99);
+		
+		ref.closeConn();
 		scan.close();
 	}
 
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	private static void login(Scanner scan) {
-		boolean found = false;
+		String loggedIn = "", part1 = "", part2 = "", entireUser = "";
 		int counter = 0;
 		String userN = "", passW = "";
 		do
@@ -85,54 +94,50 @@ public class Index{
 			System.out.print("Password: ");
 			passW = scan.nextLine();
 			
-			//System.out.println(customerList.get(0).getUsername());
-			
-			for(int i = 0; i < userList.size(); i++)
-			{
-				if(userN.equals(userList.get(i).getUsername()))
-				{
-					if(passW.equals(userList.get(i).getPassword()))
-					{
-						System.out.println("\n\t-- Access Granted --\n\t Welcome " + userList.get(i).getFirstName() + " " +userList.get(i).getLastName());
-						
-						if(userList.get(i).isAdmin())
-						{
-							userList = ad.adminInterface(userList);
-							found = true;
-							writeToFile(userList);
-							break;
-						}
-						if(userList.get(i).isEmployee())
-						{
-							userList = emp.employeeInterface(i, userList);
-							found = true;
-							writeToFile(userList);
-							break;
-						}
-						else 
-						{
-							userList = cst.customerInterface(i, userList);
-							writeToFile(userList);
-						}
-						
-						found = true;
-						break;
-					}
-				}
-			}
-			
-			if(!found)
+			loggedIn = ref.findInMaster(userN);
+			if(loggedIn.equals("INVALID"))
 			{
 				System.out.println("---------Username or Password may be inccorrect.----------\n");
 				counter++;
 			}
-			if(counter > 3)
+			else
+			{
+				String[] parts = loggedIn.split(",");
+				part1 = parts[0]; // password
+				part2 = parts[1]; // user_id
+			}
+			
+			if(counter >= 3)
 			{
 				System.out.println("---------Too Many Failed Attempts. Returning to Menu.---------");
 				break;
 			}
 			
-		}while(!found);
+			if(part1.equals(passW) && part2.equals("-111"))
+			{
+				ad.adminInterface(ref);
+				break;
+			}
+			
+			if(part1.equals(passW))
+			{
+				if(part2.length() < 6)
+				{
+					entireUser = ref.findInEmployeeTable(part2);
+					//System.out.println(entireUser);
+					emp.employeeInterface(ref, entireUser);//should consider passing the part2 user_id
+					break;
+				}
+				else
+				{
+					entireUser = ref.findInCustomerTable(part2);
+					
+					ref.updateCustomer(cst.customerInterface(entireUser, ref));
+					break;
+				}
+			}
+			
+		}while(true);
 		
 		writeToFile(userList);
 	}
@@ -160,22 +165,32 @@ public class Index{
 		
 		if(userIn == 1)
 		{
-			//CustomerHandler cst = new CustomerHandler();
-			userList.add(cst.newCustomer());
+			User u = cst.newCustomer();
+			ref.addToMaster(u);
+			ref.addToCustomerTable(u);
+			
+			//userList.add(u);
+			writeToFile(userList);
 
-			System.out.println("\n\tNew User Created Successfully!\n\t Subject to Pending Approval!");
+			System.out.println("\n\tNew Customer Created Successfully!\n\t Subject to Pending Approval!");
 			return;
 		}
 			
 		else if(userIn == 2)
 		{
-			userList.add(emp.newEmployee());
+			User u = emp.newEmployee();
+			ref.addToMaster(u);
+			ref.addToEmployeeTable(u);
+			
+			//userList.add(u);
+			writeToFile(userList);
+			
+			System.out.println("\n\tNew Employee Created Successfully!\n\t Subject to Pending Approval!");
+			return;
 		}
 		else
 			System.out.println("\t\tBack to Login!");
 		
-		writeToFile(userList);
-			
 	}
 	
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
